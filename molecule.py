@@ -4,16 +4,42 @@ A_B = 1.8897261
 A_N = {"H": 1, "He": 2, "Li": 3, "Be": 4, "B": 5,"C": 6, "N": 7, "O": 8, "F": 9, "Ne": 10}
 rng = np.random.default_rng()
 
+ZETA_SZABO = {"H": {"1s": 1.24}, "He": {"1s": 2.0925}}
+STO3G = {
+    "1s": {"alpha": [2.22766, 0.405771, 0.109818],
+           "coef":  [0.154329, 0.535328, 0.444635]},
+    "2s": {"alpha": [0.994203, 0.231031, 0.0751386],
+           "coef":  [-0.0999672, 0.399515, 0.700115]},
+    "2p": {"alpha": [0.994203, 0.231031, 0.0751386],
+           "coef":  [0.155916, 0.607684, 0.391957]},
+}
+class Basis:
+    def __init__(self, center, element, orbital):
+
+        self.center = np.array(center)
+        self.alpha= np.array(STO3G[orbital]["alpha"]) * ZETA_SZABO[element][orbital] ** 2
+        self.coef= np.array(STO3G[orbital]["coef"])
+        self.N = (2 * self.alpha / np.pi) ** 0.75
+
 # not the cleanest code
 class Nucleus:
-    def __init__(self, element, charge, position: np.array = None):
-        self.name = element
-        self.charge = charge
+    def __init__(self, element, charge= None, position: np.ndarray = None):
+        self.element = element
+        if charge == None:
+            self.charge = A_N[element]
+        else:
+            self.charge = charge
+
+
+
+
         if position is not None:
             self.position = np.array(position, dtype=float)
         else:
             self.position = np.array(rng.normal(0,[1,1,1]), dtype=float)
 
+        orbitals = ["1s"]
+        self.basis = [Basis(self.position, self.element, orbital) for orbital in orbitals]
 
 class System:
 
@@ -46,10 +72,5 @@ class System:
             raise ValueError("The number of electrons is not even.")
 
 
-
-
-
-
-
-xx = System(nuclei = [Nucleus("He", 2, )], electrons = 4, xyz = True)
-print(xx.nuclei[0].position)
+#xx = System(nuclei = [Nucleus("He", 2, )], electrons = 4, xyz = True)
+#print(xx.nuclei[0].position)
