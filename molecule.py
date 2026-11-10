@@ -13,15 +13,28 @@ STO3G = {
     "2p": {"alpha": [0.994203, 0.231031, 0.0751386],
            "coef":  [0.155916, 0.607684, 0.391957]},
 }
+
+Angular_momentum = { "s": [0,0,0],
+                     "px": [1,0,0],
+                     "py": [0,1,0],
+                     "pz": [0,0,1]}
 class Basis:
     def __init__(self, center, element, orbital):
-
+        shell = orbital[:2]
+        kind = orbital[1:]
         self.center = np.array(center)
         self.alpha= np.array(STO3G[orbital]["alpha"]) * ZETA_SZABO[element][orbital] ** 2
         self.coef= np.array(STO3G[orbital]["coef"])
-        self.N = (2 * self.alpha / np.pi) ** 0.75
+        if "s" in shell:
+
+            self.N = (2 * self.alpha / np.pi) ** 0.75
+
+        elif "p" in shell:
+
+            self.N = np.sqrt(4*self.alpha)
 
 # not the cleanest code
+
 class Nucleus:
     def __init__(self, element, charge= None, position: np.ndarray = None):
         self.element = element
@@ -30,15 +43,18 @@ class Nucleus:
         else:
             self.charge = charge
 
-
-
-
         if position is not None:
             self.position = np.array(position, dtype=float)
         else:
             self.position = np.array(rng.normal(0,[1,1,1]), dtype=float)
 
-        orbitals = ["1s"]
+        if A_N[element] <=2:
+            orbitals = ["1s"]
+        elif A_N[element]<=3:
+            orbitals = ["1s", "2s", "2px", "2py", "2pz"]
+        else:
+            raise ValueError(f"{element}: only H–Ne support")
+
         self.basis = [Basis(self.position, self.element, orbital) for orbital in orbitals]
 
 class System:
